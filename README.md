@@ -12,9 +12,16 @@ Construir uma plataforma de dados de futebol para:
 - eventos, canais e transmissao;
 - consultas rapidas para front-end e analytics.
 
-## Estrutura inicial
+## Documentacao Principal
 
-- `docs/` - documentacao tecnica e de producao
+- [Plano de producao](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md)
+- [Guia para o Lovable](/www/wwwroot/apifut.vr766.com/docs/lovable.md)
+- [Fluxo GitHub + Lovable](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
+- [Indice de documentacao](/www/wwwroot/apifut.vr766.com/docs/README.md)
+
+## Estrutura do projeto
+
+- `docs/` - documentacao tecnica, operacional e de producao
 - `src/` - codigo-fonte da API
 - `database/` - migracoes, seeds e scripts de schema
 - `scripts/` - rotinas operacionais e utilitarios
@@ -28,9 +35,18 @@ Construir uma plataforma de dados de futebol para:
 - openfootball para datasets abertos
 - Sportmonks ou API-Football para live e eventos estruturados
 
+## Fluxo de trabalho
+
+1. ler a documentacao de producao
+2. pedir ao Lovable para implementar o escopo por fases
+3. receber o codigo gerado
+4. revisar, ajustar e testar localmente
+5. commit e push para este repositório
+6. continuar o ciclo ate o deploy final
+
 ## Primeira entrega
 
 1. documentacao de producao
 2. estrutura base do repositório
 3. configuracao de git e deploy key
-
+4. organizacao do fluxo para Lovable e GitHub
