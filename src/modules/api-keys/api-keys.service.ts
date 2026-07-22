@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { createHash, randomBytes } from 'crypto';
 import { ApiKey, ApiKeyScope } from './entities/api-key.entity';
 import { ApiKeyUsage } from './entities/api-key-usage.entity';
@@ -88,21 +88,13 @@ export class ApiKeysService {
     }
   }
 
-  async countInWindow(
-    apiKeyId: string,
-    windowMs: number,
-  ): Promise<number> {
+  async countInWindow(apiKeyId: string, windowMs: number): Promise<number> {
     const from = new Date(Date.now() - windowMs);
-    return this.usageRepo.count({
-      where: { api_key_id: apiKeyId, created_at: LessThan(new Date(Date.now() + 1)) as any },
-      // NOTE: filtro real feito por queryBuilder abaixo — fallback conservador
-    }).then(async () => {
-      return this.usageRepo
-        .createQueryBuilder('u')
-        .where('u.api_key_id = :id', { id: apiKeyId })
-        .andWhere('u.created_at >= :from', { from })
-        .getCount();
-    });
+    return this.usageRepo
+      .createQueryBuilder('u')
+      .where('u.api_key_id = :id', { id: apiKeyId })
+      .andWhere('u.created_at >= :from', { from })
+      .getCount();
   }
 
   async usageSummary(apiKeyId: string): Promise<{
