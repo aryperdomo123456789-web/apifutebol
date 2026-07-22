@@ -1,7 +1,6 @@
 /**
  * Configuracao centralizada.
  * Lida pelo ConfigModule via `load: [configuration]`.
- * Acesso: configService.get('app.port'), configService.get('database.host'), etc.
  */
 export default () => ({
   app: {
@@ -28,9 +27,12 @@ export default () => ({
     timezone: process.env.DB_TIMEZONE ?? 'Z',
   },
   sources: {
-    futebolNaTvBaseUrl: process.env.FUTEBOL_NA_TV_BASE_URL ?? '',
-    theSportsDbApiKey: process.env.THESPORTSDB_API_KEY ?? '',
+    futebolNaTvBaseUrl: process.env.FUTEBOL_NA_TV_BASE_URL ?? 'https://www.futebolnatv.com.br',
+    theSportsDbApiKey: process.env.THESPORTSDB_API_KEY ?? '123',
     sportmonksApiKey: process.env.SPORTMONKS_API_KEY ?? '',
     apiFootballKey: process.env.API_FOOTBALL_KEY ?? '',
+  },
+  ingestion: {
+    schedulerEnabled: process.env.INGESTION_SCHEDULER_ENABLED ?? 'true',
   },
 });
