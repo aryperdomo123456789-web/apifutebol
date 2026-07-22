@@ -1,79 +1,80 @@
-# Fluxo GitHub + Lovable
+# Fluxo GitHub -> aaPanel
 
-## Objetivo
+## Setup inicial no VPS (uma vez)
 
-Estabelecer um fluxo simples para:
+```bash
+# Requisitos: Node 20+, npm 10+, MariaDB 10.6+, git, pm2 (opcional)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs git
+sudo npm i -g pm2
 
-- pedir implementacao ao Lovable;
-- receber codigo;
-- revisar localmente;
-- subir para GitHub;
-- puxar as atualizacoes para este ambiente.
+# Clonar o repositorio
+cd /www/wwwroot
+git clone https://github.com/aryperdomo123456789-web/apifutebol.git
+cd apifutebol
 
-## Repositorio
+# Configurar .env
+cp .env.example .env
+nano .env   # ajustar DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE
 
-- GitHub: `aryperdomo123456789-web/apifutebol`
-- branch principal: `main`
-- ambiente local: `/www/wwwroot/apifut.vr766.com`
+# Criar banco e usuario no MariaDB
+mysql -u root -p <<'SQL'
+CREATE DATABASE apifutebol CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'apifut'@'%' IDENTIFIED BY 'TROQUE_ESTA_SENHA';
+GRANT ALL ON apifutebol.* TO 'apifut'@'%';
+FLUSH PRIVILEGES;
+SQL
 
-## Sequencia recomendada
+# Instalar dependencias e buildar
+npm install
+npm run build
 
-### 1. Antes de pedir ao Lovable
+# (Fase 2 em diante) Aplicar migrations
+npm run migration:run
 
-- ler a documentacao principal;
-- definir a fase atual;
-- escolher um unico lote de entregas;
-- evitar misturar backfill, live e infra no mesmo pedido.
+# Subir com pm2
+pm2 start dist/main.js --name apifutebol
+pm2 save
+pm2 startup
+```
 
-### 2. Ao pedir ao Lovable
+## Deploy incremental (a cada nova fase)
 
-Enviar sempre:
+```bash
+cd /www/wwwroot/apifutebol
+git pull origin main
+npm install            # se package.json mudou
+npm run build
+npm run migration:run  # se migrations foram adicionadas
+pm2 restart apifutebol
+pm2 logs apifutebol --lines 100
+```
 
-- o objetivo da fase;
-- os arquivos de referencia;
-- os endpoints esperados;
-- as tabelas envolvidas;
-- os criterios de aceite;
-- o que nao pode ser alterado.
+## Verificacao apos deploy
 
-### 3. Ao receber o codigo
+```bash
+curl -s http://localhost:3000/api/v1/health | jq
+curl -s http://localhost:3000/api/v1/health/liveness | jq
+```
 
-- revisar a estrutura;
-- validar o schema;
-- testar localmente;
-- corrigir nomes e contratos;
-- preparar commit.
+## Proxy reverso (aaPanel / nginx)
 
-### 4. Ao publicar no GitHub
+Exemplo minimo de bloco `location`:
 
-- `git add .`
-- `git commit -m "mensagem objetiva"`
-- `git push origin main`
+```nginx
+location /api/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Request-Id $request_id;
+}
+```
 
-### 5. Ao puxar para este ambiente
+## Troubleshooting
 
-- `git pull origin main`
-- revisar arquivos novos;
-- validar dependencias;
-- testar as rotas;
-- atualizar a documentacao se necessario.
-
-## Regra operacional
-
-Se o Lovable gerar um bloco grande de codigo, o ideal e:
-
-1. separar por fase;
-2. confirmar migrations antes de API;
-3. confirmar ingestao antes de live;
-4. confirmar logs e healthcheck antes do deploy;
-5. manter documentação sincronizada com o código.
-
-## O que evitar
-
-- misturar varios providers no primeiro lote;
-- codar sem schema;
-- codar sem testes;
-- codar sem healthcheck;
-- subir segredos para o GitHub;
-- alterar o contrato sem registrar na documentacao.
-
+- **Erro de conexao MariaDB no boot**: verifique `DB_HOST`, `DB_PORT`, firewall e se o usuario tem grant no host correto (`'apifut'@'%'` vs `'apifut'@'localhost'`).
+- **`/health` retorna 503**: pino imprime a causa (banco fora, heap acima do limite). Ajuste os thresholds em `health.controller.ts` se necessario.
+- **`APP_PORT` em uso**: outro processo Node esta ocupando a porta. `lsof -i :3000` para identificar.

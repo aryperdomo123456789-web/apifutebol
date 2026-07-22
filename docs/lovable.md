@@ -1,106 +1,27 @@
-# Guia para o Lovable
+# Lovable como gerador de codigo
 
-## Papel do Lovable
+Este projeto usa o **Lovable apenas como gerador de codigo**, nao como runtime.
 
-O Lovable deve atuar como executor de implementacao a partir desta documentacao. A meta e gerar a base funcional da `API FUT` com foco em producao, sem quebrar o contrato de dados e sem remover memoria historica.
+## Regras
 
-## O que deve ser lido antes de codar
+- O Lovable escreve arquivos direto no repositorio GitHub (`aryperdomo123456789-web/apifutebol`) via conector GitHub.
+- O Lovable **nao executa** o backend. Nao ha preview, nem SSR, nem edge functions em uso.
+- Toda validacao (build, migrations, testes, endpoints) acontece no **VPS/aaPanel**, apos `git pull`.
+- O Lovable **nao** deve introduzir:
+  - TanStack Start, React, Vite, Cloudflare Workers
+  - Supabase, PostgreSQL, edge runtime
+  - Bibliotecas incompativeis com Node.js/NestJS puro
 
-1. [Plano de producao](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md)
-2. [Fluxo GitHub + Lovable](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
-3. [README do projeto](/www/wwwroot/apifut.vr766.com/README.md)
+## Fluxo padrao
 
-## Objetivo de implementacao
+1. Usuario descreve a fase desejada.
+2. Lovable gera/altera arquivos NestJS e commita no `main`.
+3. Usuario faz `git pull` no VPS.
+4. Usuario roda `npm install`, `npm run build`, `npm run migration:run`, reinicia o servico.
+5. Usuario valida endpoints e reporta problemas na proxima iteracao.
 
-Entregar uma API de futebol 24/7 com:
+## Convencoes de commit
 
-- ingestao multi-fonte;
-- memoria historica persistente;
-- snapshots imutaveis;
-- resposta JSON estavel;
-- jobs automatizados;
-- endpoints publicos e administrativos;
-- healthcheck e observabilidade.
-
-## Ordem de construcao recomendada
-
-### Fase 1
-
-- criar a base do projeto NestJS;
-- configurar conexao MariaDB;
-- implementar configuracao via `.env`;
-- criar healthcheck;
-- criar logs estruturados;
-- criar estrutura modular.
-
-### Fase 2
-
-- criar schema inicial do banco;
-- modelar `teams`, `competitions`, `seasons`, `matches`, `match_events`, `snapshots` e `ingestion_runs`;
-- implementar migrations;
-- garantir chaves externas e indices.
-
-### Fase 3
-
-- implementar ingestao da agenda do Futebol na TV;
-- implementar normalizacao de dados;
-- persistir dados consolidados;
-- publicar endpoints de agenda e detalhes.
-
-### Fase 4
-
-- integrar fontes historicas;
-- implementar backfill por temporada;
-- armazenar payload bruto;
-- gerar snapshots;
-- criar reconciliacao.
-
-### Fase 5
-
-- integrar provider live;
-- implementar eventos e lineups;
-- criar polling e delta engine;
-- expor endpoints live.
-
-## Regras obrigatorias
-
-- nunca apagar historico;
-- nunca expor segredos;
-- nunca quebrar o schema sem versao nova;
-- nunca depender de uma fonte unica;
-- sempre salvar `source_id`;
-- sempre salvar `updated_at`;
-- sempre registrar erros de ingestao.
-
-## Padroes de resposta
-
-- datas em ISO 8601;
-- listas vazias como `[]`;
-- campos estaveis;
-- respostas com `status` coerente;
-- erros previsiveis e documentados;
-- nada de `null` onde a API puder devolver uma lista vazia.
-
-## Checklist de aceite
-
-- [ ] API sobe localmente
-- [ ] MariaDB conecta
-- [ ] healthcheck responde
-- [ ] schema inicial criado
-- [ ] ingestao basica funciona
-- [ ] endpoint de matches existe
-- [ ] snapshot gravado
-- [ ] logs aparecem
-- [ ] commit e push funcionam
-
-## Resultado esperado
-
-Ao final, o Lovable deve devolver:
-
-- codigo fonte organizado;
-- migrations e schema;
-- rotas publicas e administrativas;
-- scripts de ingestao;
-- documentacao tecnica atualizada;
-- instrucoes para continuar o desenvolvimento neste repositorio.
-
+- Um commit por fase quando possivel.
+- Mensagem no formato: `feat(faseN): descricao curta`.
+- Arquivos gerados devem ser autoexplicativos - comentarios em portugues.

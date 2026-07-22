@@ -1,52 +1,146 @@
-# API FUT
+# API FUT 24/7
 
-API de futebol 24/7 com memoria historica persistente, ingestao multipla de fontes, snapshots e suporte a analise esportiva.
+Backend NestJS + MariaDB para uma API de futebol 24/7 com jogos ao vivo, agenda, historico de temporadas, eventos de partida, canais/transmissoes e memoria persistente.
 
-## Objetivo
+> **Status:** Fase 1 concluida - base tecnica (NestJS, config, MariaDB, healthcheck, logging).
 
-Construir uma plataforma de dados de futebol para:
+---
 
-- jogos ao vivo;
-- agenda de hoje, ontem e amanha;
-- historico de temporadas;
-- eventos, canais e transmissao;
-- consultas rapidas para front-end e analytics.
+## Stack oficial
 
-## Documentacao Principal
+- **NestJS 10** (Node.js 20+)
+- **MariaDB 10.6+** via TypeORM
+- **pino / nestjs-pino** - logging estruturado
+- **@nestjs/terminus** - healthchecks
+- **class-validator** - validacao de DTOs e variaveis de ambiente
+- Execucao em **VPS / aaPanel**
+- **GitHub** como fonte de verdade (codigo gerado no Lovable, executado fora)
 
-- [Plano de producao](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md)
-- [Guia para o Lovable](/www/wwwroot/apifut.vr766.com/docs/lovable.md)
-- [Fluxo GitHub + Lovable](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
-- [Indice de documentacao](/www/wwwroot/apifut.vr766.com/docs/README.md)
+---
 
-## Estrutura do projeto
+## Estrutura de pastas
 
-- `docs/` - documentacao tecnica, operacional e de producao
-- `src/` - codigo-fonte da API
-- `database/` - migracoes, seeds e scripts de schema
-- `scripts/` - rotinas operacionais e utilitarios
-- `test/` - testes automatizados
+```
+.
+|-- src/
+|   |-- main.ts                     # Bootstrap Nest
+|   |-- app.module.ts               # Modulo raiz
+|   |-- config/
+|   |   |-- configuration.ts        # Config centralizada (app, log, db, sources)
+|   |   `-- env.validation.ts       # Validacao das variaveis de ambiente
+|   |-- common/
+|   |   `-- logger/
+|   |       `-- logger.module.ts    # pino + request-id + redacao
+|   |-- database/
+|   |   |-- database.module.ts      # TypeORM (MariaDB)
+|   |   |-- data-source.ts          # DataSource CLI (migrations)
+|   |   `-- migrations/             # (Fase 2)
+|   `-- modules/
+|       `-- health/
+|           |-- health.module.ts
+|           `-- health.controller.ts
+|-- docs/
+|   |-- api-futebol-producao.md
+|   |-- lovable.md
+|   `-- fluxo-github-lovable.md
+|-- database/                       # scripts SQL manuais (opcional)
+|-- scripts/                        # utilitarios operacionais
+|-- test/                           # testes e2e (fases futuras)
+|-- .env.example
+|-- nest-cli.json
+|-- tsconfig.json
+|-- tsconfig.build.json
+`-- package.json
+```
 
-## Fontes planejadas
+---
 
-- Futebol na TV para agenda e canais
-- TheSportsDB para eventos e calendarios
-- football-data.co.uk para historico
-- openfootball para datasets abertos
-- Sportmonks ou API-Football para live e eventos estruturados
+## Requisitos
 
-## Fluxo de trabalho
+- Node.js **>= 20.11**
+- npm **>= 10** (ou pnpm/yarn equivalentes)
+- MariaDB **>= 10.6** rodando local ou acessivel via rede
 
-1. ler a documentacao de producao
-2. pedir ao Lovable para implementar o escopo por fases
-3. receber o codigo gerado
-4. revisar, ajustar e testar localmente
-5. commit e push para este repositório
-6. continuar o ciclo ate o deploy final
+---
 
-## Primeira entrega
+## Execucao local
 
-1. documentacao de producao
-2. estrutura base do repositório
-3. configuracao de git e deploy key
-4. organizacao do fluxo para Lovable e GitHub
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Configurar variaveis de ambiente
+cp .env.example .env
+# edite .env com credenciais reais do MariaDB
+
+# 3. Criar o banco (uma vez)
+mysql -u root -p -e "CREATE DATABASE apifutebol CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE USER 'apifut'@'%' IDENTIFIED BY 'change-me'; GRANT ALL ON apifutebol.* TO 'apifut'@'%'; FLUSH PRIVILEGES;"
+
+# 4. Rodar em desenvolvimento (watch + pino-pretty)
+npm run start:dev
+
+# 5. Rodar em producao
+npm run build
+npm run start:prod
+```
+
+A API sobe em `http://0.0.0.0:3000/api/v1`.
+
+### Endpoints da Fase 1
+
+| Metodo | Rota                       | Descricao                                     |
+| ------ | -------------------------- | --------------------------------------------- |
+| GET    | `/api/v1/health`           | Healthcheck completo (app + MariaDB + memoria)|
+| GET    | `/api/v1/health/liveness`  | Liveness simples (sem tocar dependencias)     |
+
+Exemplo:
+
+```bash
+curl http://localhost:3000/api/v1/health
+```
+
+---
+
+## Migrations (preparado para Fase 2)
+
+```bash
+# Gerar nova migration a partir das entidades
+npm run migration:generate -- src/database/migrations/NomeDaMigration
+
+# Aplicar migrations pendentes
+npm run migration:run
+
+# Reverter a ultima
+npm run migration:revert
+```
+
+---
+
+## Variaveis de ambiente
+
+Veja `.env.example`. Regras:
+
+- **Nunca** comitar `.env`.
+- **Nunca** ativar `DB_SYNCHRONIZE=true` em qualquer ambiente. Schema evolui apenas por migrations.
+- Credenciais de fontes externas (Sportmonks, API-Football, TheSportsDB) sao adicionadas nas fases 4-6.
+
+---
+
+## Fluxo Lovable -> GitHub -> aaPanel
+
+1. Lovable gera/atualiza arquivos e faz commit direto no repositorio GitHub.
+2. No VPS/aaPanel: `git pull` traz as mudancas.
+3. `npm install && npm run build && pm2 restart apifutebol` (ou equivalente).
+4. Detalhes em [`docs/fluxo-github-lovable.md`](docs/fluxo-github-lovable.md).
+
+---
+
+## Roadmap por fases
+
+- [x] **Fase 1** - Base do projeto (Nest, config, MariaDB, healthcheck, logging).
+- [ ] **Fase 2** - Schema completo (teams, competitions, seasons, matches, events, snapshots, raw_payloads, ingestion_runs, reconciliation_logs).
+- [ ] **Fase 3** - API publica basica (`/matches/live`, `/today`, `/yesterday`, `/tomorrow`, detalhes, eventos, broadcasts, competitions, teams, channels, calendar).
+- [ ] **Fase 4** - Ingestao e normalizacao (Futebol na TV + fallback).
+- [ ] **Fase 5** - Historico e snapshots imutaveis + reconciliacao.
+- [ ] **Fase 6** - Live e eventos (provider integration + workers).
