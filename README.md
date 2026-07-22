@@ -16,6 +16,17 @@ Backend NestJS + MariaDB para uma API de futebol 24/7 com jogos ao vivo, agenda,
 - Execucao em **VPS / aaPanel**
 - **GitHub** como fonte de verdade (codigo gerado no Lovable, executado fora)
 
+## Documentacao principal
+
+- [Plano de producao](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md)
+- [Guia final do produto](/www/wwwroot/apifut.vr766.com/docs/guia-final.md)
+- [API Keys e painel](/www/wwwroot/apifut.vr766.com/docs/api-keys-e-painel.md)
+- [Camada de mídia](/www/wwwroot/apifut.vr766.com/docs/midia-e-media-pack.md)
+- [Prompt mestre final](/www/wwwroot/apifut.vr766.com/docs/prompt-mestre-final-lovable.md)
+- [Guia para o Lovable](/www/wwwroot/apifut.vr766.com/docs/lovable.md)
+- [Fluxo GitHub + Lovable](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
+- [Indice de documentacao](/www/wwwroot/apifut.vr766.com/docs/README.md)
+
 ---
 
 ## Estrutura de pastas
@@ -142,5 +153,6 @@ Veja `.env.example`. Regras:
 - [ ] **Fase 2** - Schema completo (teams, competitions, seasons, matches, events, snapshots, raw_payloads, ingestion_runs, reconciliation_logs).
 - [ ] **Fase 3** - API publica basica (`/matches/live`, `/today`, `/yesterday`, `/tomorrow`, detalhes, eventos, broadcasts, competitions, teams, channels, calendar).
 - [ ] **Fase 4** - Ingestao e normalizacao (Futebol na TV + fallback).
-- [ ] **Fase 5** - Historico e snapshots imutaveis + reconciliacao.
-- [ ] **Fase 6** - Live e eventos (provider integration + workers).
+- [ ] **Fase 5** - API Keys, painel web e controle de acesso.
+- [ ] **Fase 6** - Camada de mídia, media pack e assets para banners/videos.
+- [ ] **Fase 7** - Historico, snapshots imutaveis + reconciliacao + hardening final.
