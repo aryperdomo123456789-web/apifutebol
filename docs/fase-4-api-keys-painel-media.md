@@ -60,7 +60,19 @@ pm2 restart apifut || npm run start:prod
 ## Bootstrap de uma API Key admin
 
 Como o guard bloqueia `write:admin`, gere a primeira chave direto via script
-node/typeorm ou insert SQL controlado. Exemplo com um script one-shot:
+node/typeorm ou insert SQL controlado. O repositório agora inclui:
+
+- `scripts/bootstrap-admin-key.ts`
+
+Exemplo de uso no aaPanel/VPS, depois de configurar `.env` e rodar as migrations:
+
+```bash
+npx ts-node scripts/bootstrap-admin-key.ts
+```
+
+Por padrão a chave inicial entra com o nome `magoadm`.
+
+Exemplo conceitual de um bootstrap one-shot:
 
 ```ts
 // scripts/bootstrap-admin-key.ts

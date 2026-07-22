@@ -116,7 +116,7 @@ export class ReconciliationService {
         this.logs.create({
           entity_type: 'match',
           entity_id: winner.id,
-          action: 'cross_source_conflict',
+          action: 'conflict',
           field: f as string,
           winning_source_id: winner.source_id,
           losing_source_id: loser.source_id,

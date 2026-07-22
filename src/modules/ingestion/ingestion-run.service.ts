@@ -31,7 +31,7 @@ export class IngestionRunService {
     id: string,
     patch: Partial<Pick<IngestionRun, 'status' | 'items_seen' | 'items_upserted' | 'items_skipped' | 'errors' | 'last_error' | 'stats'>>,
   ): Promise<void> {
-    await this.repo.update({ id }, { ...patch, finished_at: new Date() });
+    await this.repo.update({ id } as any, { ...(patch as any), finished_at: new Date() } as any);
     this.logger.log(
       `ingestion_run#${id} finished status=${patch.status} seen=${patch.items_seen} upserted=${patch.items_upserted} errors=${patch.errors}`,
     );

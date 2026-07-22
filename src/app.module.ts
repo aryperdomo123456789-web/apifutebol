@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AppLoggerModule } from './common/logger/logger.module';
+import { LoggerModule } from './common/logger/logger.module';
 import { CacheModule } from './common/cache/cache.module';
 import { HttpModule } from './common/http/http.module';
 import { DatabaseModule } from './database/database.module';
@@ -16,18 +16,17 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { MediaModule } from './modules/media/media.module';
 import { AdminModule } from './modules/admin/admin.module';
 import configuration from './config/configuration';
-import { envValidationSchema } from './config/env.validation';
+import { validate } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      validationSchema: envValidationSchema,
-      validationOptions: { abortEarly: true, allowUnknown: true },
+      validate,
     }),
     ScheduleModule.forRoot(),
-    AppLoggerModule,
+    LoggerModule,
     CacheModule,
     HttpModule,
     DatabaseModule,

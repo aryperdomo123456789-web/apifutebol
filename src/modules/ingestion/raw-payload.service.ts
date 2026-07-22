@@ -26,12 +26,12 @@ export class RawPayloadService {
       endpoint: input.endpoint.slice(0, 191),
       http_method: (input.httpMethod ?? 'GET').slice(0, 8),
       http_status: input.httpStatus ?? null,
-      content_type: (input.contentType ?? 'json').slice(0, 32),
+      content_type: input.contentType ?? 'json',
       fetched_at: input.fetchedAt,
       content_hash: hash,
       request_params: input.requestParams ?? null,
       body: input.body ?? '',
-    });
-    return this.repo.save(row);
+    } as any);
+    return this.repo.save(row as any);
   }
 }

@@ -34,14 +34,13 @@ export class MediaService {
   ) {}
 
   async upsertAsset(input: UpsertMediaInput): Promise<MediaAsset> {
-    const existing = await this.assets.findOne({
-      where: {
-        entity_kind: input.entity_kind,
-        entity_id: input.entity_id ?? null,
-        kind: input.kind,
-        url: input.url,
-      },
-    });
+    const where: Record<string, unknown> = {
+      entity_kind: input.entity_kind,
+      kind: input.kind,
+      url: input.url,
+    };
+    if (input.entity_id != null) where.entity_id = input.entity_id;
+    const existing = await this.assets.findOne({ where: where as any });
     if (existing) {
       Object.assign(existing, input);
       return this.assets.save(existing);
