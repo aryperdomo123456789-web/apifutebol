@@ -34,6 +34,9 @@ coverage/
 tmp/
 temp/
 
+# SSH local do workspace
+.ssh/
+
 # Lockfiles opcionais (mantenha um)
 # package-lock.json
 # yarn.lock
