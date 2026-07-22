@@ -25,8 +25,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'sources',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'slug', type: 'varchar', length: '64', isNullable: false },
@@ -49,8 +47,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'competitions',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -77,8 +73,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'seasons',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -107,8 +101,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'teams',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -136,8 +128,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'matches',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -187,8 +177,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'match_events',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -219,8 +207,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'match_status_history',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'match_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -246,8 +232,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'match_broadcasts',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'match_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -276,8 +260,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'match_lineups',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'match_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -304,8 +286,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'match_statistics',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'match_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -337,8 +317,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'ingestion_runs',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -369,8 +347,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'snapshots',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'entity_type', type: 'varchar', length: '32', isNullable: false },
@@ -396,8 +372,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'raw_payloads',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'source_id', type: 'bigint', unsigned: true, isNullable: false },
@@ -426,8 +400,6 @@ export class InitialSchema1737000000000 implements MigrationInterface {
       new Table({
         name: 'reconciliation_logs',
         engine: 'InnoDB',
-        charset: 'utf8mb4',
-        collation: 'utf8mb4_unicode_ci',
         columns: [
           { name: 'id', type: 'bigint', unsigned: true, isPrimary: true, isGenerated: true, generationStrategy: 'increment' },
           { name: 'entity_type', type: 'varchar', length: '32', isNullable: false },
