@@ -4,6 +4,9 @@ Data: 2026-07-23
 
 Este documento consolida o estado atual do projeto e o que ainda falta para considerar a API FUT realmente pronta para producao 10/10 no aaPanel.
 
+Ele e um documento derivado do plano principal em [api-futebol-producao.md](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md).
+Se houver qualquer divergencia, o documento principal define a meta final, os principios e o contrato tecnico.
+
 ## 1. Resumo executivo
 
 A API ja possui:
@@ -24,6 +27,23 @@ O que ainda impede fechar o projeto como "100% pronto" nao e mais o backend base
 - observabilidade e operacao
 - ajuste fino da documentacao para bater 100% com as rotas reais
 - testes finais de smoke, regressao e restauracao
+
+## 1.1 Fonte de verdade
+
+O documento principal [api-futebol-producao.md](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md) define:
+
+- a meta final do projeto
+- os principios tecnicos
+- o contrato de rotas
+- o modelo de dados
+- as restricoes de arquitetura
+
+Este plano existe para:
+
+- listar o que falta para cumprir a meta final
+- ordenar a execucao no aaPanel
+- explicitar riscos e criterios de aceite
+- manter o fechamento alinhado ao documento principal
 
 ## 2. Estado atual validado
 

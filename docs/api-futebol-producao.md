@@ -2,6 +2,9 @@
 
 Este documento consolida o contrato tecnico da API. Ele deve ser atualizado junto com o codigo, a cada fase.
 
+Este e o documento principal e a fonte de verdade do projeto.
+O plano tatico e operacional de fechamento vive em [plano-producao-final.md](/www/wwwroot/apifut.vr766.com/docs/plano-producao-final.md), mas ele nunca substitui este contrato.
+
 ---
 
 ## 1. Visao geral
