@@ -1,6 +1,6 @@
 # Plano de Producao Final - API FUT
 
-Data: 2026-07-23
+Data: 2026-07-23 (revisao)
 
 Este documento consolida o estado atual do projeto e o que ainda falta para considerar a API FUT 10/10 no aaPanel. Ele e um **plano derivado** do contrato principal em [`api-futebol-producao.md`](./api-futebol-producao.md). Se houver divergencia, o contrato principal prevalece.
 
@@ -11,17 +11,19 @@ A API ja possui:
 - build passando
 - migrations aplicadas
 - seed de fontes funcionando
-- chave administrativa bootstrapada
+- chave administrativa bootstrapada (`magoadm`)
 - painel admin servindo HTML
 - rotas publicas, historico, stats, media pack e snapshots funcionando
 - schema principal persistido em MariaDB (`matches`, `match_events`, `match_snapshots`, `api_keys`, `api_key_usage`, `media_assets`, `media_packs` etc.)
+- **observabilidade base**: `/metrics` Prometheus + `MetricsInterceptor` global + contadores dedicados (`apifut_http_*`, `apifut_ingestion_*`)
+- `npm run smoke` cobrindo health, metrics, live, calendar, competitions e admin
 
 O que ainda impede fechar como "100% pronto" nao e mais o backend base. E acabamento de producao:
 
 - validacao final no aaPanel com PM2 e Nginx no dominio real
-- cron de snapshots e backup em producao
-- observabilidade e operacao
-- ajuste fino da documentacao para bater 100% com as rotas reais
+- cron de snapshots, backup e restore-test em producao
+- instrumentar `IngestionService` com `metrics.ingestionRunsTotal` / `ingestionFailuresTotal` / `ingestionDuration`
+- alertas Prometheus/Alertmanager conforme [`observabilidade.md`](./observabilidade.md)
 - testes finais de smoke, regressao e restauracao
 
 ## 2. Estado atual validado
@@ -34,7 +36,8 @@ O que ainda impede fechar como "100% pronto" nao e mais o backend base. E acabam
 - `GET /api/v1/admin/ui` responde HTML
 - `GET /api/v1/admin/overview` responde com `X-API-Key`
 - `GET /api/v1/history/matches/:id/snapshot` responde snapshot
-- `GET /api/v1/matches/:id/media` responde media pack
+- `GET /api/v1/media/match/:id/pack` responde media pack
+- `GET /metrics` responde formato Prometheus
 
 ### 2.2 Banco
 - `migration:run` funciona no MariaDB do aaPanel
@@ -56,41 +59,38 @@ O que ainda impede fechar como "100% pronto" nao e mais o backend base. E acabam
 - Nginx apontando para o processo correto
 - dominio real servindo `https`
 - headers de seguranca e rate limit ativos
+- `location = /metrics` restrito a rede do Prometheus (ver `docs/observabilidade.md`)
 
-### 3.2 Rotinas automatizadas
+### 3.2 Rotinas automatizadas (`deploy/crontab.example`)
 - cron do `npm run snapshot:finals`
-- cron do backup diario
+- cron do backup diario (`deploy/backup.sh`)
+- restore-test semanal (`deploy/restore-test.sh`)
 - rotacao/retencao de logs
-- verificacao de restauracao do backup
+- smoke a cada 5 min alimentando Uptime Kuma / Healthchecks.io
 
-### 3.3 Observabilidade
-- metricas de ingestao
-- contagem de falhas por fonte
-- latencia por rota
-- alertas basicos de disponibilidade
-- dashboard operacional resumido
+### 3.3 Observabilidade (fechar loop)
+- instrumentar `IngestionService` com os contadores ja registrados no `MetricsService`
+- publicar alertas do `docs/observabilidade.md` no Alertmanager
+- dashboard operacional resumido (Grafana ou painel proprio)
 
 ### 3.4 Documentacao
-- manter contrato principal como referencia unica
-- manter README e docs alinhados as rotas reais
-- separar "validado" de "planejado" em todo texto
-- deixar claro o fluxo oficial de deploy no aaPanel
+- contrato principal `api-futebol-producao.md` como referencia unica (feito)
+- README alinhado as rotas reais (feito)
+- separar "validado" de "planejado" em todo texto (feito)
+- deixar claro o fluxo oficial de deploy no aaPanel (feito nesta revisao)
 
 ### 3.5 Testes finais
-- smoke test em producao
-- validacao de painel com chave em navegador
+- `npm run smoke` em producao
+- validacao do painel com chave em navegador
 - validacao de snapshot por partida finalizada
 - validacao do endpoint de media pack
 - teste de reboot do processo com PM2
-- teste de restauracao de banco a partir do backup
+- teste de restauracao de banco (`deploy/restore-test.sh`)
 
 ## 4. Plano de fechamento
 
 ### Fase A - Fechamento operacional
-
 Objetivo: aplicacao operando como servico real no aaPanel.
-
-Passos:
 
 1. publicar o codigo final no `main`
 2. `git pull` no servidor
@@ -100,28 +100,27 @@ Passos:
 6. `BOOTSTRAP_API_KEY_NAME=magoadm BOOTSTRAP_API_KEY_OWNER=admin npm run key:bootstrap`
 7. `npm run build`
 8. `pm2 start deploy/ecosystem.config.js`
-9. testar `health`, `live`, `admin/ui`, `history`, `stats`
+9. testar `health`, `live`, `admin/ui`, `history`, `stats`, `metrics`
 
 ### Fase B - Hardening
 1. Nginx / reverse proxy
 2. TLS / HTTPS
 3. rate limit no proxy
 4. headers de seguranca
-5. restricao de IP no painel, se aplicavel
+5. `location = /metrics` restrito por IP
 6. restart automatico do PM2
 
 ### Fase C - Rotinas automaticas
-1. cron de snapshots
-2. backup diario
-3. teste de restauracao
-4. log proprio de jobs
+1. `crontab deploy/crontab.example`
+2. verificar `/var/log/apifut/` populando
+3. rodar `deploy/restore-test.sh` manualmente uma vez
+4. registrar smoke em Uptime Kuma / Healthchecks.io
 
-### Fase D - Observabilidade
-1. metricas minimas
-2. contagem de ingestao por fonte
-3. contagem de erros por job
-4. latencia das rotas principais
-5. visao operacional simples
+### Fase D - Observabilidade final
+1. instrumentar `IngestionService`
+2. subir Prometheus + Alertmanager
+3. importar alertas de `docs/observabilidade.md`
+4. dashboard operacional simples
 
 ### Fase E - Documentacao e QA final
 1. revisar README
@@ -130,7 +129,7 @@ Passos:
 4. revisar doc de media pack
 5. revisar doc de schema
 6. revisar doc de deploy
-7. fechar checklist final de aceite
+7. fechar checklist final de aceite (`docs/producao-checklist.md`)
 
 ## 5. Checklist final de producao
 
@@ -146,22 +145,26 @@ Passos:
 - [x] stats responde
 - [x] media pack responde
 - [x] snapshots finais funcionam
+- [x] `/metrics` responde
 
 ### Infra
 - [ ] PM2 em producao real validado
 - [ ] Nginx/TLS validado no dominio real
+- [ ] `/metrics` protegido no Nginx
 - [ ] logs persistentes configurados
 - [ ] cron de snapshots em producao
 - [ ] backup diario em producao
+- [ ] restore-test semanal validado
 
 ### Operacao
-- [ ] observabilidade minima definida
+- [ ] IngestionService instrumentado com metricas
+- [ ] alertas Prometheus ativos
 - [ ] testes de reboot executados
 - [ ] restauracao de backup testada
 - [ ] smoke test em producao concluido
 
 ### Documentacao
-- [x] contrato principal reflete escopo real (media, api-keys, painel, historico, stats)
+- [x] contrato principal reflete escopo real (media, api-keys, painel, historico, stats, metrics)
 - [x] README alinhado com rotas reais
 - [x] docs com `/api/v1` padronizado
 - [ ] doc de deploy final revisada com ambiente real
@@ -184,15 +187,17 @@ Depois:
 ```bash
 curl -s http://127.0.0.1:3000/api/v1/health
 curl -s http://127.0.0.1:3000/api/v1/live -H "X-API-Key: $KEY"
-curl -s http://127.0.0.1:3000/api/v1/admin/ui
+curl -s http://127.0.0.1:3000/api/v1/admin/ui | head
+curl -s http://127.0.0.1:3000/metrics | head
+BASE_URL=https://apifut.vr766.com API_KEY=$KEY npm run smoke
 ```
 
 ## 7. Riscos restantes
 
-- divergencia entre documento e rota real
+- divergencia entre documento e rota real (mitigado nesta revisao)
 - regressao de schema em futura migration
 - falha de cron em ambiente novo
-- falta de observabilidade no primeiro incidente
+- falta de instrumentacao do IngestionService (sem visibilidade de falhas por fonte)
 - erro de permissao no Nginx ou PM2
 
 ## 8. Definicao de pronto
@@ -202,14 +207,15 @@ Este projeto pode ser considerado 10/10 quando:
 - a API sobe no aaPanel sem erro
 - o dominio responde em HTTPS
 - o painel admin funciona com a chave bootstrap
-- snapshots e backup rodam de forma automatica
+- snapshots, backup e restore-test rodam automaticos
+- IngestionService alimenta as metricas Prometheus
 - os docs refletem exatamente o comportamento real
 - existe rotina de operacao e recuperacao
 
 ## 9. Proximo passo recomendado
 
-1. validar deploy real no aaPanel seguindo Fase A
-2. seguir a checklist de infra
-3. fazer smoke test em producao
-4. fechar observabilidade
-5. revisar a documentacao final
+1. deploy real no aaPanel (Fase A)
+2. hardening Nginx/TLS (Fase B)
+3. cron + backup + restore-test (Fase C)
+4. instrumentar IngestionService + alertas (Fase D)
+5. revisar documentacao final (Fase E)
