@@ -20,7 +20,8 @@
     "ingest:live": "ts-node -r tsconfig-paths/register scripts/ingest-live.ts",
     "ingest:day": "ts-node -r tsconfig-paths/register scripts/ingest-day.ts",
     "snapshot:finals": "ts-node -r tsconfig-paths/register scripts/snapshot-finals.ts",
-    "key:bootstrap": "ts-node -r tsconfig-paths/register scripts/bootstrap-admin-key.ts"
+    "key:bootstrap": "ts-node -r tsconfig-paths/register scripts/bootstrap-admin-key.ts",
+    "smoke": "ts-node -r tsconfig-paths/register scripts/smoke-test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.4",
@@ -39,6 +40,7 @@
     "pino": "^9.4.0",
     "pino-http": "^10.3.0",
     "pino-pretty": "^11.2.2",
+    "prom-client": "^15.1.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20"
