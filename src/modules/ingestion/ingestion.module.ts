@@ -13,14 +13,17 @@ import { Match } from '../matches/entities/match.entity';
 import { MatchEvent } from '../matches/entities/match-event.entity';
 import { MatchBroadcast } from '../matches/entities/match-broadcast.entity';
 import { MatchStatusHistory } from '../matches/entities/match-status-history.entity';
+import { MatchSnapshot } from '../matches/entities/match-snapshot.entity';
 import { IngestionRunService } from './ingestion-run.service';
 import { RawPayloadService } from './raw-payload.service';
 import { NormalizerService } from './normalizer.service';
 import { ReconciliationService } from './reconciliation.service';
 import { IngestionService } from './ingestion.service';
 import { IngestionScheduler } from './ingestion.scheduler';
+import { SnapshotService } from './snapshot.service';
 import { TheSportsDbSource } from './sources/thesportsdb.source';
 import { FutebolNaTvSource } from './sources/futebol-na-tv.source';
+import { ApiFootballSource } from './sources/api-football.source';
 
 @Module({
   imports: [
@@ -28,14 +31,15 @@ import { FutebolNaTvSource } from './sources/futebol-na-tv.source';
     SourcesModule,
     TypeOrmModule.forFeature([
       IngestionRun, RawPayload, ReconciliationLog, Source,
-      Team, Competition, Season, Match, MatchEvent, MatchBroadcast, MatchStatusHistory,
+      Team, Competition, Season, Match, MatchEvent, MatchBroadcast,
+      MatchStatusHistory, MatchSnapshot,
     ]),
   ],
   providers: [
     IngestionRunService, RawPayloadService, NormalizerService, ReconciliationService,
-    IngestionService, IngestionScheduler,
-    TheSportsDbSource, FutebolNaTvSource,
+    IngestionService, IngestionScheduler, SnapshotService,
+    TheSportsDbSource, FutebolNaTvSource, ApiFootballSource,
   ],
-  exports: [IngestionService],
+  exports: [IngestionService, SnapshotService],
 })
 export class IngestionModule {}
