@@ -1,7 +1,7 @@
 /**
- * Smoke test da API FUT em produção.
+ * Smoke test da API FUT em producao.
  * Uso: BASE_URL=https://apifut.vr766.com API_KEY=xxx npm run smoke
- * Retorna exit code != 0 quando qualquer verificação falha.
+ * Retorna exit code != 0 quando qualquer verificacao falha.
  */
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const KEY = process.env.API_KEY ?? '';
@@ -16,21 +16,23 @@ interface Check {
 }
 
 const CHECKS: Check[] = [
-  { name: 'health', path: '/health', expectStatus: 200 },
+  { name: 'health', path: `${PREFIX}/health`, expectStatus: 200 },
+  { name: 'liveness', path: `${PREFIX}/health/liveness`, expectStatus: 200 },
   { name: 'metrics', path: '/metrics', expectStatus: 200 },
   {
     name: 'live matches',
-    path: `${PREFIX}/matches/live`,
+    path: `${PREFIX}/live`,
     auth: true,
-    validate: (b) => (Array.isArray((b as { data?: unknown }).data) ? null : 'data não é array'),
+    validate: (b) => (Array.isArray((b as { data?: unknown }).data) ? null : 'data nao e array'),
   },
   {
     name: 'today calendar',
-    path: `${PREFIX}/matches?date=${new Date().toISOString().slice(0, 10)}`,
+    path: `${PREFIX}/calendar?date=${new Date().toISOString().slice(0, 10)}`,
     auth: true,
   },
   { name: 'competitions', path: `${PREFIX}/competitions`, auth: true },
-  { name: 'sources', path: `${PREFIX}/admin/sources`, auth: true },
+  { name: 'admin overview', path: `${PREFIX}/admin/overview`, auth: true },
+  { name: 'admin sources', path: `${PREFIX}/admin/sources`, auth: true },
 ];
 
 async function run() {
