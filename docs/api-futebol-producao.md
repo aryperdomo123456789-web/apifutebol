@@ -23,6 +23,7 @@ API publica de futebol 24/7 e plataforma de midia, com:
 - **camada de midia**: logos, banners, thumbnails, overlays, backgrounds, media pack por jogo e referencias de video/stream sob licenca
 - **API Key** obrigatoria em endpoints publicos, com rate limit e auditoria
 - **painel administrativo** web (HTML servido pela propria API) para operacao
+- **observabilidade** Prometheus (`/metrics`) com interceptor global de latencia
 - memoria persistente em MariaDB
 - consumo por front-end, analise estatistica, geradores de banners/thumbnails e integracoes externas
 
@@ -47,6 +48,7 @@ API publica de futebol 24/7 e plataforma de midia, com:
 - @nestjs/terminus para healthcheck
 - @nestjs/schedule para cron/ingestao
 - class-validator para DTOs e env
+- prom-client para metricas (registry `apifut_`)
 - Cache TTL in-memory com stale-on-error
 - Deploy: VPS (aaPanel) + PM2 + Nginx (SSL + rate limit) + backup diario do MariaDB
 - GitHub como fonte de verdade do codigo
@@ -71,85 +73,104 @@ src/
     history/       # Historico e snapshot por partida (validado)
     statistics/    # Stats agregadas (validado)
     media/         # Assets, media pack por jogo (validado)
+    metrics/       # Prometheus registry + interceptor global (validado)
 ```
 
 ## 5. Contrato de rotas
 
-Todas sob prefixo `/api/v1`. Rotas publicas exigem `X-API-Key`. Rotas de admin exigem chave com escopo/role admin.
+Todas sob prefixo global `/api/v1`, exceto `/metrics` (raiz). Rotas publicas de dados exigem `X-API-Key`. Rotas admin exigem chave com escopo `read:admin` / `write:admin`. Rota `/admin/ui` e publica (HTML do painel; o painel injeta a chave no browser).
 
-### 5.1 Health (validado)
+### 5.1 Health e observabilidade (validado)
 
-- `GET /health` - health completo (app + MariaDB + memoria)
-- `GET /health/liveness` - liveness simples
+- `GET /api/v1/health` - healthcheck completo (app + MariaDB + memoria)
+- `GET /api/v1/health/liveness` - liveness simples
+- `GET /metrics` - exposicao Prometheus (proteger no Nginx por IP)
 
 ### 5.2 Partidas (validado)
 
-- `GET /live` - jogos ao vivo agora
-- `GET /today` - jogos de hoje
-- `GET /yesterday` - jogos de ontem
-- `GET /tomorrow` - jogos de amanha
-- `GET /calendar?date=YYYY-MM-DD` - jogos de um dia especifico
-- `GET /matches/:id` - detalhes da partida
-- `GET /matches/:id/events` - eventos da partida
-- `GET /matches/:id/broadcasts` - transmissoes da partida
-- `GET /matches/:id/media` - media pack versionado da partida
+- `GET /api/v1/live` - jogos ao vivo agora
+- `GET /api/v1/today` - jogos de hoje
+- `GET /api/v1/yesterday` - jogos de ontem
+- `GET /api/v1/tomorrow` - jogos de amanha
+- `GET /api/v1/calendar?date=YYYY-MM-DD` - jogos de um dia especifico
+- `GET /api/v1/matches/:id` - detalhes da partida
+- `GET /api/v1/matches/:id/events` - eventos da partida
+- `GET /api/v1/matches/:id/broadcasts` - transmissoes da partida
 
 ### 5.3 Catalogo (validado)
 
-- `GET /competitions`
-- `GET /teams`
-- `GET /channels`
+- `GET /api/v1/competitions`
+- `GET /api/v1/teams`
+- `GET /api/v1/channels`
 
 ### 5.4 Historico (validado)
 
-- `GET /history/matches?team=&competition=&from=&to=` - listagem historica
-- `GET /history/matches/:id/snapshot` - snapshot imutavel final
+- `GET /api/v1/history/matches?team=&competition=&from=&to=&limit=&offset=` - listagem historica
+- `GET /api/v1/history/teams/:teamId?limit=` - ultimos jogos do time
+- `GET /api/v1/history/competitions/:competitionId?season=&limit=` - historico da competicao
+- `GET /api/v1/history/matches/:id/snapshot` - snapshot imutavel final
 
 ### 5.5 Estatisticas (validado)
 
-- `GET /stats/matches/:id`
-- `GET /stats/teams/:teamId?from=&to=`
-- `GET /stats/competitions/:competitionId/top-scorers?season=&limit=`
+- `GET /api/v1/stats/matches/:id`
+- `GET /api/v1/stats/teams/:teamId?from=&to=`
+- `GET /api/v1/stats/competitions/:competitionId/top-scorers?season=&limit=`
+- `GET /api/v1/stats/overview`
 
-### 5.6 API Keys (validado, requer admin)
+### 5.6 Media (validado)
 
-- `POST /api-keys` - criar
-- `GET /api-keys` - listar
-- `DELETE /api-keys/:id` - revogar
-- Guard global aplica `X-API-Key` em todas as rotas publicas, com rate limit por IP.
+Escopos: `read:media` para leitura, `write:admin` para mutacoes.
 
-### 5.7 Painel admin (validado, requer admin)
+- `GET /api/v1/media/assets?entity_kind=&entity_id=`
+- `GET /api/v1/media/match/:id/pack` - media pack versionado da partida (substitui a antiga proposta `/matches/:id/media`)
+- `GET /api/v1/media/packs`
+- `POST /api/v1/media/assets`
+- `DELETE /api/v1/media/assets/:id`
+- `POST /api/v1/media/match/:id/pack/rebuild`
 
-- `GET /admin/ui` - painel HTML
-- `GET /admin/overview` - visao operacional (health, chaves, ingestao)
+### 5.7 API Keys (validado, requer `write:admin`)
 
-### 5.8 Planejado (fora do escopo entregue)
+- `GET /api/v1/admin/api-keys` - listar
+- `POST /api/v1/admin/api-keys` - criar (retorna `raw_key` uma unica vez)
+- `DELETE /api/v1/admin/api-keys/:id` - revogar
+- `GET /api/v1/admin/api-keys/:id/usage` - resumo de uso
 
-- `GET /competitions/:id`
-- `GET /teams/:id`
-- metricas Prometheus dedicadas
+Guard global aplica `X-API-Key` em rotas publicas de dados e em `/admin/*`, `/media/*`, com rate limit por IP e por chave.
+
+### 5.8 Painel admin (validado)
+
+- `GET /api/v1/admin/ui` - painel HTML (publico; o painel usa a chave admin no browser)
+- `GET /api/v1/admin/overview` - contadores operacionais (`read:admin`)
+- `GET /api/v1/admin/sources` - lista de fontes (`read:admin`)
+- `GET /api/v1/admin/runs` - ultimas execucoes de ingestao (`read:admin`)
+- `GET /api/v1/admin/snapshots` - snapshots recentes (`read:admin`)
+
+### 5.9 Planejado (fora do escopo entregue)
+
+- `GET /api/v1/competitions/:id`, `GET /api/v1/teams/:id`
 - exposicao publica de `ingestion_runs` e `reconciliation_logs`
+- dashboards Grafana derivados de `apifut_*`
 
 ## 6. Fontes de dados
 
-| Fonte              | Papel                                         | Estado     |
-| ------------------ | --------------------------------------------- | ---------- |
-| Futebol na TV      | Agenda + canais (editorial BR)                | validado   |
-| TheSportsDB        | Historico publico + metadados                 | validado   |
-| API-Football       | Live + eventos estruturados                   | validado   |
-| football-data.co.uk | Historico tabular                            | planejado  |
-| openfootball       | Datasets historicos open source              | planejado  |
-| Sportmonks         | Live + eventos (provider pago)               | planejado  |
+| Fonte              | Papel                                          | Estado     |
+| ------------------ | ---------------------------------------------- | ---------- |
+| Futebol na TV      | Agenda + canais (editorial BR)                 | validado   |
+| TheSportsDB        | Historico publico + metadados                  | validado   |
+| API-Football       | Live + eventos estruturados                    | validado   |
+| football-data.co.uk| Historico tabular                              | planejado  |
+| openfootball       | Datasets historicos open source                | planejado  |
+| Sportmonks         | Live + eventos (provider pago)                 | planejado  |
 
-Regra: em caso de conflito, prevalece a fonte com maior prioridade configurada na tabela `sources`, registrado em `reconciliation_logs`.
+Regra: em conflito, prevalece a fonte de maior prioridade configurada na tabela `sources`, registrado em `reconciliation_logs`.
 
 ## 7. Modelo de dados
 
 Tabelas principais persistidas em MariaDB (detalhe em [`schema.md`](./schema.md)):
 
-- `sources`, `ingestion_runs`, `reconciliation_logs`, `raw_payloads`, `snapshots`
+- `sources`, `ingestion_runs`, `reconciliation_logs`, `raw_payloads`, `snapshots`, `match_snapshots`
 - `competitions`, `seasons`, `teams`
-- `matches`, `match_events`, `match_status_history`, `match_broadcasts`, `match_lineups`, `match_statistics`, `match_snapshots`
+- `matches`, `match_events`, `match_status_history`, `match_broadcasts`, `match_lineups`, `match_statistics`
 - `api_keys`, `api_key_usage`
 - `media_assets`, `media_packs`
 
@@ -159,7 +180,7 @@ Toda tabela relevante carrega: `source_id`, `external_id`, `created_at`, `update
 
 Cada mudanca material em uma partida gera:
 
-- registro em `snapshots` ou `match_snapshots` (imutavel) com o estado completo em JSON e hash SHA-256
+- registro em `match_snapshots` (imutavel) com o estado completo em JSON e hash SHA-256
 - registro em `raw_payloads` com o payload original da fonte
 - registro em `reconciliation_logs` descrevendo o diff aplicado
 
@@ -173,7 +194,7 @@ A API entrega, alem dos dados, uma camada de midia usada por geradores externos 
 - banners de partida
 - thumbnails
 - overlays e backgrounds
-- media pack por jogo (`GET /matches/:id/media`) versionado
+- media pack por jogo (`GET /api/v1/media/match/:id/pack`) versionado
 - referencia de clips/streams de video quando houver origem/licenca valida
 
 Regras obrigatorias:
@@ -187,21 +208,27 @@ Detalhe operacional em [`midia-e-media-pack.md`](./midia-e-media-pack.md).
 
 ## 10. API Keys e painel admin
 
-- toda rota publica exige `X-API-Key`
+- toda rota publica de dados exige `X-API-Key`
 - chaves geradas com prefixo `fut_` + hash SHA-256 persistido
 - rate limit por IP e por chave
 - auditoria em `api_key_usage`
-- painel `GET /admin/ui` serve HTML e consome `GET /admin/overview` com a mesma chave admin
+- painel `GET /api/v1/admin/ui` serve HTML e consome os endpoints `/api/v1/admin/*` com a chave admin injetada pelo operador
 - bootstrap inicial via `scripts/bootstrap-admin-key.ts` (nome padrao `magoadm`)
 
 Detalhe operacional em [`api-keys-e-painel.md`](./api-keys-e-painel.md) e [`fase-4-api-keys-painel-media.md`](./fase-4-api-keys-painel-media.md).
 
-## 11. Observabilidade
+## 11. Observabilidade (validado)
 
 - Logs pino JSON (stdout) com `request-id`, `app`, `env`
 - Redacao automatica de `Authorization`, `cookie`, `x-api-key`, `password`, `token`, `apiKey`
 - Healthcheck em `GET /api/v1/health`
-- Metricas Prometheus **planejadas** para fase de hardening
+- Metricas Prometheus em `GET /metrics` (prefixo `apifut_`):
+  - `apifut_http_requests_total`, `apifut_http_request_duration_seconds`
+  - `apifut_ingestion_runs_total`, `apifut_ingestion_failures_total`, `apifut_ingestion_duration_seconds`
+  - metricas padrao Node (`apifut_process_*`, `apifut_nodejs_*`)
+- Interceptor global `MetricsInterceptor` cobre todas as rotas
+- Smoke test em `npm run smoke` (`scripts/smoke-test.ts`)
+- Detalhes, alertas Prometheus recomendados e protecao Nginx do `/metrics`: [`observabilidade.md`](./observabilidade.md)
 
 ## 12. O que NAO fazer
 
@@ -211,11 +238,14 @@ Detalhe operacional em [`api-keys-e-painel.md`](./api-keys-e-painel.md) e [`fase
 - Nao apagar linhas de `matches`, `match_events`, `snapshots` ou `match_snapshots` (soft-delete quando necessario).
 - Nao servir video/stream sem licenca validada.
 - Nao remover `X-API-Key` de rotas publicas.
+- Nao expor `/metrics` publicamente sem `allow`/`deny` no Nginx.
 - Nao criar documento paralelo competindo com este contrato.
 
 ## 13. Referencias internas
 
 - [`plano-producao-final.md`](./plano-producao-final.md) - plano operacional derivado
+- [`producao-checklist.md`](./producao-checklist.md) - checklist final de aceite
+- [`observabilidade.md`](./observabilidade.md) - metricas, alertas, smoke
 - [`guia-final.md`](./guia-final.md) - visao de produto e roadmap
 - [`schema.md`](./schema.md) - modelo de dados
 - [`midia-e-media-pack.md`](./midia-e-media-pack.md) - camada de midia
