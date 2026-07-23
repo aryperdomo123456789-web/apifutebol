@@ -4,6 +4,7 @@ Neste diretorio ficam:
 
 - [api-futebol-producao.md](/www/wwwroot/apifut.vr766.com/docs/api-futebol-producao.md)
 - [guia-final.md](/www/wwwroot/apifut.vr766.com/docs/guia-final.md)
+- [plano-producao-final.md](/www/wwwroot/apifut.vr766.com/docs/plano-producao-final.md)
 - [api-keys-e-painel.md](/www/wwwroot/apifut.vr766.com/docs/api-keys-e-painel.md)
 - [midia-e-media-pack.md](/www/wwwroot/apifut.vr766.com/docs/midia-e-media-pack.md)
 - [prompt-mestre-final-lovable.md](/www/wwwroot/apifut.vr766.com/docs/prompt-mestre-final-lovable.md)

@@ -2,6 +2,8 @@
 
 Documento vivo do que foi entregue nesta rodada para levar a API FUT de 7/10 rumo a 10/10.
 
+> Para o plano final de fechamento, incluindo o que ainda falta em producao, veja `docs/plano-producao-final.md`.
+
 ## Entregas desta rodada
 
 ### 1. Parser HTML real do FutebolNaTV
@@ -92,6 +94,4 @@ Documento vivo do que foi entregue nesta rodada para levar a API FUT de 7/10 rum
 - API Key + painel + media pack: ✅
 - Hardening produção (PM2/Nginx/backup): ✅ (esta rodada, arquivos prontos)
 
-**Estimativa: 9/10.** Falta apenas o 1 ponto que só um dia rodando em produção resolve:
-observabilidade real (métricas Prometheus, alertas), testes E2E de reconciliação,
-e ajuste fino dos seletores do FutebolNaTV com HTML de amostra real.
+**Estimativa: 9/10.** O plano restante de fechamento está detalhado em `docs/plano-producao-final.md`.

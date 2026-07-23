@@ -68,7 +68,7 @@ export class Phase4ApiKeysMedia1737100000000 implements MigrationInterface {
     await q.query(`
       CREATE TABLE \`media_packs\` (
         \`id\` BIGINT NOT NULL AUTO_INCREMENT,
-        \`match_id\` BIGINT NOT NULL,
+        \`match_id\` BIGINT UNSIGNED NOT NULL,
         \`payload\` JSON NOT NULL,
         \`version_hash\` CHAR(64) NOT NULL,
         \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

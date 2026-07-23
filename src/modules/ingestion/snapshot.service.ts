@@ -93,6 +93,11 @@ export class SnapshotService {
     return n;
   }
 
+  /** Alias de compatibilidade para o CLI `snapshot:finals`. */
+  async snapshotFinishedMatches(limit = 100): Promise<number> {
+    return this.snapshotPendingFinals(limit);
+  }
+
   private pickMatch(m: Match) {
     return {
       id: m.id,

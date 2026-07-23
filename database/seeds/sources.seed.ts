@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import dataSource from '../src/database/data-source';
+import dataSource from '../../src/database/data-source';
 
 /**
  * Re-seed idempotente da tabela `sources`.

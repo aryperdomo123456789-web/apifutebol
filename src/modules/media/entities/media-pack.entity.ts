@@ -17,7 +17,7 @@ export class MediaPack {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: string;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', unsigned: true })
   match_id!: string;
 
   @Column({ type: 'json' })
