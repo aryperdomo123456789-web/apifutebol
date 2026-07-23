@@ -1,16 +1,18 @@
 # API FUT - Guia Final de Produto e Producao
 
-Data: 2026-07-22
+Data: 2026-07-23
+
+> Este guia descreve a **visao de produto** e o **roadmap** por fase. O contrato tecnico oficial e o modelo de dados vivem em [`api-futebol-producao.md`](./api-futebol-producao.md), que sempre prevalece em caso de divergencia.
 
 ## 1. Visao do produto
 
-A `API FUT` deve evoluir para uma plataforma profissional de futebol capaz de atender tres frentes ao mesmo tempo:
+A `API FUT` e uma plataforma profissional de futebol e midia capaz de atender tres frentes:
 
 - dados esportivos em tempo real e historicos;
 - consumo por ferramentas de analise estatistica;
 - consumo por geradores de banners, thumbnails, overlays e videos.
 
-O produto final nao e apenas uma API de partidas. Ele e um ecossistema com:
+O produto final nao e apenas uma API de partidas. E um ecossistema com:
 
 - ingestao multi-fonte;
 - memoria persistente em MariaDB;
@@ -36,16 +38,16 @@ O produto final nao e apenas uma API de partidas. Ele e um ecossistema com:
 
 ### 3.1 Camadas
 
-- `API pública`
+- `API publica`
 - `Painel administrativo`
-- `Ingestão de fontes`
-- `Normalização`
-- `Reconciliação`
-- `Persistência histórica`
+- `Ingestao de fontes`
+- `Normalizacao`
+- `Reconciliacao`
+- `Persistencia historica`
 - `Cache`
-- `Camada de mídia`
+- `Camada de midia`
 - `Observabilidade`
-- `Segurança e API Keys`
+- `Seguranca e API Keys`
 
 ### 3.2 Fluxo geral
 
@@ -55,15 +57,13 @@ O produto final nao e apenas uma API de partidas. Ele e um ecossistema com:
 4. reconciliar conflitos por prioridade;
 5. atualizar estado consolidado;
 6. gerar snapshot;
-7. publicar resposta JSON estável;
-8. registrar métricas, logs e uso por chave;
-9. servir mídia e assets quando disponíveis.
+7. publicar resposta JSON estavel;
+8. registrar metricas, logs e uso por chave;
+9. servir midia e assets quando disponiveis.
 
-## 4. Contrato da API pública
+## 4. Contrato da API publica
 
-### 4.1 Padrão de resposta
-
-Toda resposta deve seguir envelope:
+### 4.1 Padrao de resposta
 
 ```json
 {
@@ -76,193 +76,153 @@ Toda resposta deve seguir envelope:
 }
 ```
 
-### 4.2 Regras obrigatórias
+### 4.2 Regras obrigatorias
 
 - datas em ISO 8601;
-- timezone explícito;
-- arrays vazios em vez de `null` quando aplicável;
-- campos estáveis;
-- erros de fonte não quebram o schema;
-- a versão da API é fixa em `/api/v1`.
+- timezone explicito;
+- arrays vazios em vez de `null` quando aplicavel;
+- campos estaveis;
+- erros de fonte nao quebram o schema;
+- a versao da API e fixa em `/api/v1`.
 
-### 4.3 Endpoints públicos principais
+### 4.3 Endpoints publicos principais (validado)
 
+Todos exigem `X-API-Key`.
+
+Partidas:
 - `GET /api/v1/live`
 - `GET /api/v1/today`
 - `GET /api/v1/yesterday`
 - `GET /api/v1/tomorrow`
+- `GET /api/v1/calendar?date=YYYY-MM-DD`
 - `GET /api/v1/matches/:id`
 - `GET /api/v1/matches/:id/events`
 - `GET /api/v1/matches/:id/broadcasts`
+- `GET /api/v1/matches/:id/media`
+
+Historico e stats:
+- `GET /api/v1/history/matches`
+- `GET /api/v1/history/matches/:id/snapshot`
+- `GET /api/v1/stats/matches/:id`
+- `GET /api/v1/stats/teams/:teamId`
+- `GET /api/v1/stats/competitions/:competitionId/top-scorers`
+
+Catalogo:
 - `GET /api/v1/competitions`
-- `GET /api/v1/competitions/:id`
 - `GET /api/v1/teams`
-- `GET /api/v1/teams/:id`
 - `GET /api/v1/channels`
-- `GET /api/v1/calendar?date=YYYY-MM-DD`
-- `GET /api/v1/search?q=`
+
+Admin (chave admin):
+- `GET /api/v1/admin/ui`
+- `GET /api/v1/admin/overview`
+- `POST|GET|DELETE /api/v1/api-keys`
+
+Planejado (nao entregue): `/competitions/:id`, `/teams/:id`, `/search?q=`.
 
 ## 5. Fontes de dados
 
-### 5.1 Fontes editoriais e de agenda
+### 5.1 Editoriais e agenda
+- [Futebol na TV](https://www.futebolnatv.com.br/) - agenda, canais, horario. **validado**
 
-- [Futebol na TV](https://www.futebolnatv.com.br/)
+### 5.2 Historicas
+- [TheSportsDB](https://www.thesportsdb.com/) - **validado**
+- [football-data.co.uk](https://www.football-data.co.uk/) - **planejado**
+- [openfootball](https://openfootball.github.io/) - **planejado**
 
-Uso:
-
-- agenda;
-- canais;
-- horário;
-- referência editorial.
-
-### 5.2 Fontes históricas
-
-- [TheSportsDB](https://www.thesportsdb.com/)
-- [football-data.co.uk](https://www.football-data.co.uk/)
-- [openfootball](https://openfootball.github.io/)
-
-Uso:
-
-- backfill;
-- temporadas antigas;
-- catalogação;
-- histórico consolidado.
-
-### 5.3 Fontes ao vivo / estruturadas
-
-- [Sportmonks](https://www.sportmonks.com/football-api/)
-- [API-Football](https://www.api-football.com/)
-
-Uso:
-
-- live;
-- eventos;
-- lineups;
-- estatísticas;
-- eventos estruturados.
+### 5.3 Ao vivo / estruturadas
+- [API-Football](https://www.api-football.com/) - **validado**
+- [Sportmonks](https://www.sportmonks.com/football-api/) - **planejado**
 
 ## 6. Memoria eterna
 
-A memoria eterna da API nao depende de uma unica tabela. Ela depende da combinacao de:
+Combinacao de:
 
 - `matches` como estado consolidado;
 - `match_events` como trilha de eventos;
 - `match_status_history` como historico de status;
-- `snapshots` como estados imutaveis;
+- `snapshots` e `match_snapshots` como estados imutaveis;
 - `raw_payloads` como prova bruta;
 - `reconciliation_logs` como auditoria de conflito;
 - `ingestion_runs` como rastreio operacional.
 
-## 7. Camada de media
+## 7. Camada de midia (validada)
 
-A API deve evoluir para fornecer tambem material visual para geradores externos:
+A API fornece material visual para geradores externos:
 
-- logos de times;
-- logos de competicoes;
-- logos de canais;
+- logos de times, competicoes e canais;
 - banners de partida;
 - thumbnails;
 - overlays;
 - backgrounds;
-- media packs por jogo;
+- media pack por jogo (`GET /matches/:id/media`);
 - referencia de clips de video quando houver origem/licenca valida.
 
-Importante:
+Regras:
 
-- imagens e logos podem ser servidas como assets;
-- videos completos so podem existir quando a fonte permitir legalmente;
-- a API deve guardar origem e licenca de cada asset;
-- o media pack deve acompanhar a partida.
+- imagens e logos servidos como assets versionados;
+- videos completos so existem quando a fonte permitir legalmente;
+- a API guarda origem e licenca de cada asset;
+- o media pack acompanha a partida em todo o ciclo.
 
-## 8. API Key e painel web
+## 8. API Key e painel web (validado)
 
-O produto final deve oferecer:
-
-- criacao de chaves de acesso;
-- revogacao de chaves;
-- expiracao;
+- criacao, revogacao e expiracao de chaves;
 - escopos por recurso;
-- rate limit por chave;
-- logs de uso;
-- painel para administracao;
-- monitoramento da ingestao e da saude do sistema.
+- rate limit por chave e por IP;
+- logs de uso em `api_key_usage`;
+- painel HTML em `GET /api/v1/admin/ui`;
+- overview operacional em `GET /api/v1/admin/overview`;
+- bootstrap inicial via `scripts/bootstrap-admin-key.ts` (nome `magoadm`).
 
-## 9. Roadmap de conclusao
+## 9. Roadmap por fase
 
-### Fase 1
+### Fase 1 (validado)
+- base NestJS; MariaDB; healthcheck; logging; configuracao.
 
-- base NestJS;
-- MariaDB;
-- healthcheck;
-- logging;
-- configuracao.
+### Fase 2 (validado)
+- schema completo; entidades; migration inicial; seed de sources.
 
-### Fase 2
+### Fase 3 (validado)
+- ingestao multi-fonte; normalizacao; reconciliacao; endpoints publicos basicos.
 
-- schema completo;
-- entidades;
-- migration inicial;
-- seed de sources.
+### Fase 4 (validado)
+- parser editorial do Futebol na TV; ampliacao dos adapters; snapshots imutaveis; historico; estatisticas; evolucao do cache.
 
-### Fase 3
+### Fase 5 (validado)
+- API Keys; painel web; rate limit; scopes; auditoria de uso.
 
-- ingestao multi-fonte;
-- normalizacao;
-- reconcilacao;
-- endpoints publicos basicos.
+### Fase 6 (validado)
+- camada de midia; media pack; assets para banners e thumbnails; referencia de video.
 
-### Fase 4
+### Fase 7 (em execucao)
+- hardening de producao (PM2 + Nginx + TLS + backup);
+- observabilidade (metricas, latencia, alertas);
+- testes finais de smoke, restauracao e reboot;
+- documentacao final do consumidor.
 
-- parser editorial do Futebol na TV;
-- ampliacao dos adapters;
-- snapshots imutaveis;
-- historico e estatisticas;
-- evolucao do cache.
-
-### Fase 5
-
-- API Keys;
-- painel web;
-- rate limit;
-- scopes;
-- auditoria de uso.
-
-### Fase 6
-
-- camada de media;
-- media pack;
-- assets para banners e thumbnails;
-- referencia de video;
-- integracao com geradores externos.
-
-### Fase 7
-
-- hardening de producao;
-- observabilidade;
-- backup;
-- testes de restauraçao;
-- documentação final do consumidor.
-
-## 10. Critérios de aceite do produto final
+## 10. Criterios de aceite do produto final
 
 - build sem erro;
-- API pública versionada;
-- ingestão funcionando;
-- reconciliação ativa;
+- API publica versionada em `/api/v1`;
+- ingestao funcionando;
+- reconciliacao ativa;
 - snapshots persistentes;
 - API Key operacional;
 - painel administrativo funcional;
-- media pack disponível;
-- documentação publicada;
+- media pack disponivel;
+- documentacao publicada;
 - fluxo GitHub -> aaPanel validado.
 
 ## 11. Referencias internas
 
-- [README do projeto](/www/wwwroot/apifut.vr766.com/README.md)
-- [Guia para o Lovable](/www/wwwroot/apifut.vr766.com/docs/lovable.md)
-- [Fluxo GitHub + Lovable](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
-- [Schema](/www/wwwroot/apifut.vr766.com/docs/schema.md)
-- [API Keys e Painel](/www/wwwroot/apifut.vr766.com/docs/api-keys-e-painel.md)
-- [Camada de Mídia](/www/wwwroot/apifut.vr766.com/docs/midia-e-media-pack.md)
-- [Prompt Mestre Final](/www/wwwroot/apifut.vr766.com/docs/prompt-mestre-final-lovable.md)
-
+- [Contrato principal](./api-futebol-producao.md) **(fonte de verdade)**
+- [Plano operacional](./plano-producao-final.md)
+- [Schema](./schema.md)
+- [API Keys e Painel](./api-keys-e-painel.md)
+- [Fase 4 detalhada](./fase-4-api-keys-painel-media.md)
+- [Camada de midia](./midia-e-media-pack.md)
+- [Estabilizacao Fase 4](./estabilizacao-fase-4.md)
+- [Roadmap 10/10](./roadmap-10-de-10.md)
+- [Guia Lovable](./lovable.md)
+- [Fluxo GitHub + Lovable](./fluxo-github-lovable.md)
+- [README do projeto](../README.md)
