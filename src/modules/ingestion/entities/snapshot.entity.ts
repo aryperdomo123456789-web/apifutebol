@@ -7,53 +7,41 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Source } from '../../sources/entities/source.entity';
-import { IngestionRun } from './ingestion-run.entity';
+import { Match } from '../../matches/entities/match.entity';
+
+export type MatchSnapshotKind = 'final' | 'live' | 'preview';
 
 /**
- * Snapshot IMUTÁVEL de uma entidade em um momento no tempo.
- * Nunca UPDATE, nunca DELETE em produção. Cada mudança gera nova linha.
- * `content_hash` permite deduplicar snapshots idênticos.
+ * Snapshot IMUTÁVEL do estado agregado de uma partida.
+ * Uma vez gerado (ex.: kind='final'), nunca sofre UPDATE.
+ * `hash` (SHA-256 do payload canonicalizado) permite deduplicação.
  */
-@Entity({ name: 'snapshots' })
-@Index('idx_snapshots_entity', ['entity_type', 'entity_id', 'observed_at'])
-@Index('idx_snapshots_run', ['run_id'])
-@Index('uq_snapshots_dedupe', ['entity_type', 'entity_id', 'source_id', 'content_hash'], {
-  unique: true,
-})
-export class Snapshot {
+@Entity({ name: 'match_snapshots' })
+@Index('uq_match_snapshots_match_kind', ['match_id', 'kind'], { unique: true })
+@Index('idx_match_snapshots_created', ['created_at'])
+export class MatchSnapshot {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id!: string;
 
-  @Column({ type: 'varchar', length: 32 })
-  entity_type!: 'match' | 'competition' | 'season' | 'team' | 'lineup' | 'statistics' | 'broadcast';
-
   @Column({ type: 'bigint', unsigned: true })
-  entity_id!: string;
+  match_id!: string;
 
-  @Column({ type: 'bigint', unsigned: true })
-  source_id!: string;
+  @ManyToOne(() => Match, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'match_id' })
+  match!: Match;
 
-  @ManyToOne(() => Source, { onDelete: 'RESTRICT', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'source_id' })
-  source!: Source;
-
-  @Column({ type: 'bigint', unsigned: true, nullable: true })
-  run_id!: string | null;
-
-  @ManyToOne(() => IngestionRun, { onDelete: 'SET NULL', onUpdate: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'run_id' })
-  run!: IngestionRun | null;
-
-  @Column({ type: 'timestamp', precision: 6 })
-  observed_at!: Date;
+  @Column({ type: 'varchar', length: 16 })
+  kind!: MatchSnapshotKind;
 
   @Column({ type: 'char', length: 64 })
-  content_hash!: string;
+  hash!: string;
 
   @Column({ type: 'json' })
-  payload!: unknown;
+  payload!: Record<string, unknown>;
 
   @CreateDateColumn({ type: 'timestamp', precision: 6 })
   created_at!: Date;
 }
+
+/** Backwards-compat alias (algumas migrations/serviços antigos usam `Snapshot`). */
+export { MatchSnapshot as Snapshot };

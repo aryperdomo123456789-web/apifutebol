@@ -8,9 +8,9 @@ import { MatchEvent } from '../matches/entities/match-event.entity';
 import { MatchBroadcast } from '../matches/entities/match-broadcast.entity';
 
 /**
- * Snapshots imutáveis: ao final de uma partida (ou em pontos-chave),
- * gera-se um payload congelado, com hash, que nunca mais é alterado.
- * Base do "histórico permanente" prometido pela API FUT.
+ * Snapshots imutáveis: ao final de uma partida (ou em pontos-chave), gera um
+ * payload congelado, com hash, que nunca mais é alterado. Base do "histórico
+ * permanente" da API FUT.
  */
 @Injectable()
 export class SnapshotService {
@@ -26,7 +26,7 @@ export class SnapshotService {
   /** Snapshot final imutável — só cria se ainda não existir para (match, 'final'). */
   async snapshotFinal(matchId: string): Promise<MatchSnapshot | null> {
     const existing = await this.repo.findOne({
-      where: { match_id: matchId, kind: 'final' as any },
+      where: { match_id: matchId, kind: 'final' },
     });
     if (existing) return existing;
 
@@ -43,16 +43,18 @@ export class SnapshotService {
       match: this.pickMatch(match),
       events: events.map((e) => ({
         minute: e.minute,
-        added_time: e.added_time,
-        type: e.type,
-        team_side: e.team_side,
+        minute_extra: e.minute_extra,
+        event_type: e.event_type,
+        team_id: e.team_id,
         player_name: e.player_name,
         detail: e.detail,
       })),
       broadcasts: broadcasts.map((b) => ({
+        channel_slug: b.channel_slug,
         channel_name: b.channel_name,
-        medium: b.medium,
-        country: b.country,
+        channel_type: b.channel_type,
+        country_code: b.country_code,
+        language: b.language,
       })),
       generated_at: new Date().toISOString(),
       schema_version: '1.0',
@@ -63,8 +65,8 @@ export class SnapshotService {
 
     const snap = this.repo.create({
       match_id: matchId,
-      kind: 'final' as any,
-      payload,
+      kind: 'final',
+      payload: payload as unknown as Record<string, unknown>,
       hash,
     });
     const saved = await this.repo.save(snap);
@@ -72,16 +74,11 @@ export class SnapshotService {
     return saved;
   }
 
-  /** Roda em batch — pega partidas finished sem snapshot final. */
+  /** Roda em batch: pega partidas finished sem snapshot final. */
   async snapshotPendingFinals(limit = 100): Promise<number> {
     const rows = await this.matches
       .createQueryBuilder('m')
-      .leftJoin(
-        MatchSnapshot,
-        's',
-        's.match_id = m.id AND s.kind = :kind',
-        { kind: 'final' },
-      )
+      .leftJoin(MatchSnapshot, 's', 's.match_id = m.id AND s.kind = :kind', { kind: 'final' })
       .where('m.status = :status', { status: 'finished' })
       .andWhere('s.id IS NULL')
       .limit(limit)
@@ -99,17 +96,20 @@ export class SnapshotService {
   private pickMatch(m: Match) {
     return {
       id: m.id,
-      external_ids: (m as any).external_ids,
+      external_id: m.external_id,
+      source_id: m.source_id,
       status: m.status,
       kickoff_at: m.kickoff_at,
-      score_home: m.score_home,
-      score_away: m.score_away,
-      home_team_id: (m as any).home_team_id,
-      away_team_id: (m as any).away_team_id,
-      competition_id: (m as any).competition_id,
-      season_id: (m as any).season_id,
-      venue: (m as any).venue,
-      referee: (m as any).referee,
+      home_score: m.home_score,
+      away_score: m.away_score,
+      home_score_ht: m.home_score_ht,
+      away_score_ht: m.away_score_ht,
+      home_team_id: m.home_team_id,
+      away_team_id: m.away_team_id,
+      competition_id: m.competition_id,
+      season_id: m.season_id,
+      venue_name: m.venue_name,
+      venue_city: m.venue_city,
     };
   }
 }
