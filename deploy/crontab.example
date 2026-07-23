@@ -1,0 +1,15 @@
+# Crontab de produção — API FUT
+# Instalar como usuário da aplicação:  crontab -e
+# Todos os horários em UTC (ajuste TZ conforme o VPS).
+
+# Snapshot imutável de finais/jogos encerrados — a cada 30 min
+*/30 * * * * cd /www/wwwroot/apifut.vr766.com && /usr/bin/node -r ts-node/register -r tsconfig-paths/register scripts/snapshot-finals.ts >> /var/log/apifut/snapshot.log 2>&1
+
+# Backup completo do MariaDB — 03:15 todo dia
+15 3 * * * /www/wwwroot/apifut.vr766.com/deploy/backup.sh >> /var/log/apifut/backup.log 2>&1
+
+# Teste de restauração do backup em base temporária — 04:30 aos domingos
+30 4 * * 0 /www/wwwroot/apifut.vr766.com/deploy/restore-test.sh >> /var/log/apifut/restore-test.log 2>&1
+
+# Smoke test — a cada 5 min, alerta por saída != 0 (integrar com Uptime Kuma / Healthchecks.io)
+*/5 * * * * cd /www/wwwroot/apifut.vr766.com && BASE_URL=https://apifut.vr766.com API_KEY=$(cat /etc/apifut/monitor.key) npm run --silent smoke >> /var/log/apifut/smoke.log 2>&1
