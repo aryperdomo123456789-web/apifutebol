@@ -17,6 +17,7 @@ import { MediaModule } from './modules/media/media.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HistoryModule } from './modules/history/history.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 
@@ -25,6 +26,7 @@ import { validate } from './config/env.validation';
     ConfigModule.forRoot({ isGlobal: true, load: [configuration], validate }),
     ScheduleModule.forRoot(),
     LoggerModule, CacheModule, HttpModule, DatabaseModule,
+    MetricsModule,
     ApiKeysModule, HealthModule, SourcesModule, IngestionModule,
     MatchesModule, CompetitionsModule, TeamsModule, ChannelsModule,
     MediaModule, AdminModule, HistoryModule, StatisticsModule,
