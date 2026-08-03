@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+shots/
+state.json
+mago_extraction.json
+mago_network.json
+*.pyc

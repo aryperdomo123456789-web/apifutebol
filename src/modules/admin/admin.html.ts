@@ -66,6 +66,7 @@ export const ADMIN_HTML = `<!doctype html>
   <span class="pill ok">v1</span>
   <span class="sp"></span>
   <span id="who" class="pill"></span>
+  <a href="/api/v1/gerador-mago" class="pill" style="text-decoration:none;color:var(--text)">Gerador Mago</a>
   <button onclick="logout()">Sair</button>
 </header>
 

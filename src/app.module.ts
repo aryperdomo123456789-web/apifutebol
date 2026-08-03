@@ -15,6 +15,7 @@ import { ChannelsModule } from './modules/channels/channels.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { MediaModule } from './modules/media/media.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { GeradorMagoModule } from './modules/gerador-mago/gerador-mago.module';
 import { HistoryModule } from './modules/history/history.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
@@ -29,7 +30,7 @@ import { validate } from './config/env.validation';
     MetricsModule,
     ApiKeysModule, HealthModule, SourcesModule, IngestionModule,
     MatchesModule, CompetitionsModule, TeamsModule, ChannelsModule,
-    MediaModule, AdminModule, HistoryModule, StatisticsModule,
+    MediaModule, AdminModule, GeradorMagoModule, HistoryModule, StatisticsModule,
   ],
 })
 export class AppModule {}

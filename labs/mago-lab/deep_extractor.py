@@ -1,70 +1,75 @@
-import asyncio
-import json
-import os
-from pathlib import Path
-from playwright.async_api import async_playwright
+from __future__ import annotations
 
-BASE_URL = "https://gerador.pro"
-STATE_FILE = "/tmp/browser/gerador/state.json"
-OUT_FILE = "/tmp/browser/gerador/mago_extraction.json"
+from typing import Any
 
-async def extract_deep(page, route):
-    print(f"Deep Extraction: {route}")
-    try:
-        await page.goto(f"{BASE_URL}/{route}", wait_until="networkidle")
-        
-        # O futbanner.php parece ser uma vitrine de modelos. Precisamos clicar neles ou ver os links.
-        data = await page.evaluate(\"\"\"() => {
-            const results = {
-                route: window.location.pathname,
-                title: document.title,
-                links: Array.from(document.querySelectorAll('a')).map(a => ({ text: a.innerText, href: a.href })),
-                models: Array.from(document.querySelectorAll('.card, .thumbnail, [data-id]')).map(el => ({
-                    id: el.getAttribute('data-id') || el.id,
-                    text: el.innerText.trim(),
-                    img: el.querySelector('img')?.src
-                }))
-            };
-            return results;
-        }\"\"\")
-        
-        # Se for uma pág de seleção de modelo (como futbanner), vamos tentar entrar em um modelo
-        if \"futbanner\" in route:
-            edit_link = await page.evaluate(\"\"\"() => {
-                const a = Array.from(document.querySelectorAll('a')).find(a => a.href.includes('gerar') || a.href.includes('edit'));
-                return a ? a.href : null;
-            }\"\"\")
-            if edit_link:
-                await page.goto(edit_link, wait_until=\"networkidle\")
-                form_data = await page.evaluate(\"\"\"() => {
-                    return Array.from(document.querySelectorAll('form')).map(f => ({
-                        action: f.action,
-                        method: f.method,
-                        inputs: Array.from(f.querySelectorAll('input, select, textarea')).map(i => ({
-                            name: i.name,
-                            type: i.type,
-                            label: document.querySelector(`label[for=\"${i.id}\"]`)?.innerText || i.placeholder || i.name,
-                            options: i.tagName === 'SELECT' ? Array.from(i.options).map(o => o.text) : []
-                        }))
-                    }));
-                }\"\"\")
-                data['form_structure'] = form_data
-        
-        return data
-    except Exception as e:
-        return {\"error\": str(e), \"route\": route}
 
-async def main():
-    async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True)
-        context = await browser.new_context(
-            storage_state=STATE_FILE if os.path.exists(STATE_FILE) else None,
-            viewport={\"width\": 1280, \"height\": 1800}
+async def extract_deep(page, route: str, base_url: str = "https://gerador.pro") -> dict[str, Any]:
+    await page.goto(f"{base_url}/{route.lstrip('/')}", wait_until="domcontentloaded")
+    await page.wait_for_load_state("networkidle")
+
+    data = await page.evaluate(
+        """() => {
+          return {
+            route: window.location.pathname,
+            url: window.location.href,
+            title: document.title,
+            links: Array.from(document.querySelectorAll('a')).map((a) => ({
+              text: (a.innerText || a.textContent || '').trim(),
+              href: a.href || ''
+            })),
+            buttons: Array.from(document.querySelectorAll('button,input[type="submit"],input[type="button"]')).map((el) => ({
+              text: (el.innerText || el.value || '').trim(),
+              id: el.id || '',
+              name: el.name || ''
+            })),
+            forms: Array.from(document.querySelectorAll('form')).map((form) => ({
+              action: form.action || '',
+              method: form.method || 'get',
+              inputs: Array.from(form.querySelectorAll('input, select, textarea')).map((el) => ({
+                name: el.name || '',
+                id: el.id || '',
+                type: el.type || el.tagName.toLowerCase(),
+                value: 'value' in el ? el.value : '',
+                placeholder: el.placeholder || '',
+                label: el.id ? (document.querySelector(`label[for="${el.id}"]`)?.innerText || '') : '',
+                options: el.tagName === 'SELECT' ? Array.from(el.options).map((o) => o.text) : []
+              }))
+            })),
+            headings: Array.from(document.querySelectorAll('h1,h2,h3')).map((h) => h.innerText.trim()),
+            images: Array.from(document.querySelectorAll('img')).map((img) => ({
+              alt: img.alt || '',
+              src: img.src || ''
+            }))
+          };
+        }"""
+    )
+
+    if "futbanner" in route.lower():
+        edit_link = await page.evaluate(
+            """() => {
+              const a = Array.from(document.querySelectorAll('a')).find((link) => {
+                const href = link.href || '';
+                return href.includes('gerar') || href.includes('edit') || href.includes('novo');
+              });
+              return a ? a.href : null;
+            }"""
         )
-        page = await context.new_page()
-        for r in [\"futbanner.php\", \"esportes.php\", \"lote.php\"]:
-            results[r] = await extract_deep(page, r)
-        await browser.close()
+        if edit_link:
+            await page.goto(edit_link, wait_until="domcontentloaded")
+            await page.wait_for_load_state("networkidle")
+            data["edit_link"] = edit_link
+            data["form_structure"] = await page.evaluate(
+                """() => Array.from(document.querySelectorAll('form')).map((form) => ({
+                  action: form.action || '',
+                  method: form.method || 'get',
+                  inputs: Array.from(form.querySelectorAll('input, select, textarea')).map((el) => ({
+                    name: el.name || '',
+                    id: el.id || '',
+                    type: el.type || el.tagName.toLowerCase(),
+                    placeholder: el.placeholder || '',
+                    label: el.id ? (document.querySelector(`label[for="${el.id}"]`)?.innerText || '') : ''
+                  }))
+                }))"""
+            )
 
-if __name__ == \"__main__\":
-    asyncio.run(main())
+    return data

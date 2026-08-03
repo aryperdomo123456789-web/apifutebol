@@ -10,6 +10,7 @@ Neste diretorio ficam:
 - [prompt-mestre-final-lovable.md](/www/wwwroot/apifut.vr766.com/docs/prompt-mestre-final-lovable.md)
 - [lovable.md](/www/wwwroot/apifut.vr766.com/docs/lovable.md)
 - [fluxo-github-lovable.md](/www/wwwroot/apifut.vr766.com/docs/fluxo-github-lovable.md)
+- [gerador-mago-portal.md](/www/wwwroot/apifut.vr766.com/docs/gerador-mago-portal.md)
 - [schema.md](/www/wwwroot/apifut.vr766.com/docs/schema.md)
 - especificacao tecnica;
 - guia de producao;

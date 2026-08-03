@@ -1,1 +1,6 @@
-[{\"t\": \"Dashboard\", \"h\": \"index.php\"}, {\"t\": \"Futebol\", \"h\": \"futbanner.php\"}]
+[
+  { "t": "Dashboard", "h": "index.php" },
+  { "t": "Futebol", "h": "futbanner.php" },
+  { "t": "Esportes", "h": "esportes.php" },
+  { "t": "Lote", "h": "lote.php" }
+]
