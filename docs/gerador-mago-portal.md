@@ -28,6 +28,32 @@ Foi criado um dashboard com:
 - bloco de resumo com rotas, módulos, state e extração
 - painel lateral de detalhes do módulo selecionado
 - tabela de rotas do lab
+- rota local de abertura para cada módulo em `/api/v1/gerador-mago/open/:id`
+
+### 1.1 Cobertura do menu do lab
+
+O painel agora cobre o conjunto expandido de módulos do laboratório, incluindo:
+
+- Mercado Pago
+- Gerar Express
+- Gerar Vídeo
+- Vídeo divulgação
+- Bolão Copa
+- Gerar Futebol
+- Guia Futebol
+- Gerar NBA
+- Gerar UFC
+- Fórmula 1
+- Todos esportes
+- Gerar Banner Filme
+- Gerar Banner
+- Séries/Novelas
+- Logo
+- Meu Telegram
+- App G Pro Player
+- App G Pro Reels
+
+O item `Mercado Pago` aparece no portal como **EM BREVE**.
 
 Arquivos principais:
 
@@ -100,6 +126,7 @@ O painel atual já expõe módulos do lab como:
 - Processo `apifut` reiniciado em PM2
 - Portal respondendo em produção
 - Rota base do portal validada
+- Rota de abertura dos módulos validada
 
 ## Observações de segurança
 

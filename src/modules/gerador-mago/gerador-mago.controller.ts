@@ -1,4 +1,4 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header, Param, Redirect } from '@nestjs/common';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { Public } from '../api-keys/api-key.guard';
@@ -25,6 +25,8 @@ type FeatureCard = {
   legacyLabel: string;
   legacyRoute: string;
   notes: string[];
+  badge?: string;
+  disabled?: boolean;
 };
 
 const labDir = join(process.cwd(), 'labs', 'mago-lab');
@@ -43,6 +45,18 @@ const FEATURE_DEFS: Array<Omit<FeatureCard, 'legacyRoute'>> = [
     accent: 'blue',
     legacyLabel: 'Dashboard',
     notes: ['Menu principal do lab', 'Acesso ao restante do sistema'],
+  },
+  {
+    id: 'mercado-pago',
+    section: 'Financeiro',
+    title: 'Mercado Pago',
+    subtitle: 'Integração financeira do laboratório.',
+    icon: 'MP',
+    accent: 'yellow',
+    legacyLabel: 'Mercado Pago',
+    badge: 'EM BREVE',
+    disabled: true,
+    notes: ['Pagamento e cobrança', 'Recurso em preparação'],
   },
   {
     id: 'whatsapp',
@@ -75,6 +89,16 @@ const FEATURE_DEFS: Array<Omit<FeatureCard, 'legacyRoute'>> = [
     notes: ['Vídeo principal', 'Saída para divulgação'],
   },
   {
+    id: 'video-divulgacao',
+    section: 'Produção',
+    title: 'Vídeo divulgação',
+    subtitle: 'Versão pronta para divulgar conteúdo.',
+    icon: 'VD',
+    accent: 'orange',
+    legacyLabel: 'Vídeo divulgação',
+    notes: ['Conteúdo curto', 'Peças prontas para redes'],
+  },
+  {
     id: 'futebol',
     section: 'Esportes',
     title: 'Gerar Futebol',
@@ -83,6 +107,46 @@ const FEATURE_DEFS: Array<Omit<FeatureCard, 'legacyRoute'>> = [
     accent: 'purple',
     legacyLabel: 'Gerar Futebol',
     notes: ['Banner futebol', 'Arte esportiva'],
+  },
+  {
+    id: 'guia-futebol',
+    section: 'Esportes',
+    title: 'Guia Futebol',
+    subtitle: 'Guia e apoio do fluxo de futebol.',
+    icon: 'GF',
+    accent: 'cyan',
+    legacyLabel: 'Guia Futebol',
+    notes: ['Suporte ao banner', 'Tela complementar'],
+  },
+  {
+    id: 'nba',
+    section: 'Esportes',
+    title: 'Gerar NBA',
+    subtitle: 'Banner e arte para basquete.',
+    icon: 'NBA',
+    accent: 'blue',
+    legacyLabel: 'Gerar NBA',
+    notes: ['Basquete', 'Template esportivo'],
+  },
+  {
+    id: 'ufc',
+    section: 'Esportes',
+    title: 'Gerar UFC',
+    subtitle: 'Arte para MMA e lutas.',
+    icon: 'UFC',
+    accent: 'red',
+    legacyLabel: 'Gerar ufc',
+    notes: ['MMA', 'Peça de luta'],
+  },
+  {
+    id: 'formula1',
+    section: 'Esportes',
+    title: 'Fórmula 1',
+    subtitle: 'Banner de corridas e F1.',
+    icon: 'F1',
+    accent: 'orange',
+    legacyLabel: 'Fórmula 1',
+    notes: ['Corrida', 'Template automobilístico'],
   },
   {
     id: 'filmes',
@@ -97,10 +161,20 @@ const FEATURE_DEFS: Array<Omit<FeatureCard, 'legacyRoute'>> = [
   {
     id: 'series',
     section: 'Banners',
-    title: 'Séries/Novelas',
+    title: 'Gerar Banner',
     subtitle: 'Divulgação para séries e novelas.',
     icon: 'TV',
     accent: 'orange',
+    legacyLabel: 'Gerar Banner\nSéries/Novelas',
+    notes: ['Banner de divulgação', 'Material para redes'],
+  },
+  {
+    id: 'series-novelas',
+    section: 'Banners',
+    title: 'Séries/Novelas',
+    subtitle: 'Atalho dedicado ao banner de séries.',
+    icon: 'SN',
+    accent: 'violet',
     legacyLabel: 'Gerar Banner\nSéries/Novelas',
     notes: ['Banner de divulgação', 'Material para redes'],
   },
@@ -226,7 +300,7 @@ function buildFeatures(): FeatureCard[] {
 }
 
 function buildNavigation(features: FeatureCard[]) {
-  const sectionOrder = ['Dashboard', 'Comunicação', 'Produção', 'Esportes', 'Banners', 'Marca', 'Apps', 'Negócio'];
+  const sectionOrder = ['Dashboard', 'Financeiro', 'Comunicação', 'Produção', 'Esportes', 'Banners', 'Marca', 'Apps', 'Negócio'];
   const groups = sectionOrder.map((section) => ({
     section,
     items: features.filter((item) => item.section === section),
@@ -269,6 +343,7 @@ export class GeradorMagoController {
         extractionFile,
         networkFile,
         routeCount: routes.length,
+        moduleCount: features.length,
         stateExists: existsSync(stateFile),
         extractionExists: existsSync(extractionFile),
         networkExists: existsSync(networkFile),
@@ -308,6 +383,23 @@ export class GeradorMagoController {
         source: 'gerador-mago',
         version: 'v1',
       },
+    };
+  }
+
+  @Get('open/:id')
+  @Public()
+  @Redirect()
+  open(@Param('id') id: string) {
+    const feature = buildFeatures().find((item) => item.id === id);
+    if (!feature || feature.disabled || !feature.legacyRoute || feature.legacyRoute === '—') {
+      return {
+        url: '/api/v1/gerador-mago',
+        statusCode: 302,
+      };
+    }
+    return {
+      url: feature.legacyRoute,
+      statusCode: 302,
     };
   }
 

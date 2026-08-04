@@ -248,6 +248,12 @@ export const GERADOR_MAGO_HTML = `<!doctype html>
     overflow: hidden;
     cursor: pointer;
   }
+  .feature-disabled {
+    opacity: 0.78;
+  }
+  .feature-disabled .icon {
+    filter: saturate(0.8);
+  }
   .feature::before {
     content: "";
     position: absolute;
@@ -543,6 +549,7 @@ function renderSidebar(data) {
             '<strong>' + esc(item.title) + '</strong>' +
             '<span>' + esc(item.subtitle) + '</span>' +
           '</div>' +
+          (item.badge ? '<span class="chip" style="margin-left:auto;background:rgba(255,255,255,0.08)">' + esc(item.badge) + '</span>' : '') +
         '</a>'
       )).join('') +
     '</div>'
@@ -558,7 +565,7 @@ function renderSidebar(data) {
 function renderOverview(data) {
   const cards = [
     ['Rotas mapeadas', data.routeCount || 0, 'map.json sincronizado'],
-    ['Módulos', (data.features || []).length || 0, 'cards do lab legado'],
+    ['Módulos', data.moduleCount || (data.features || []).length || 0, 'cards do lab legado'],
     ['State', data.stateExists ? 'OK' : 'ausente', data.stateFile || 'state.json'],
     ['Extração', data.extractionExists ? 'OK' : 'ausente', data.extractionFile || 'mago_extraction.json'],
   ];
@@ -573,14 +580,20 @@ function renderOverview(data) {
 
 function renderCards(data) {
   const box = document.getElementById('cards');
-  box.innerHTML = data.features.map(feature => (
-    '<article class="feature" id="' + esc(feature.id) + '" data-feature="' + esc(feature.id) + '">' +
+  const features = data.features || [];
+  box.innerHTML = features.map(feature => (
+    '<article class="feature' + (feature.disabled ? ' feature-disabled' : '') + '" id="' + esc(feature.id) + '" data-feature="' + esc(feature.id) + '">' +
       '<div class="top">' +
         '<div class="section">' + esc(feature.section) + '</div>' +
         '<div class="icon" style="' + accentStyle(feature.accent) + '">' + esc(feature.icon) + '</div>' +
       '</div>' +
+      (feature.badge ? '<span class="chip" style="position:absolute; top:18px; right:86px; background:rgba(255,255,255,0.07)">' + esc(feature.badge) + '</span>' : '') +
       '<h3 class="title">' + esc(feature.title) + '</h3>' +
       '<p class="sub">' + esc(feature.subtitle) + '</p>' +
+      '<div class="chips">' +
+        '<span class="chip">' + esc(feature.section) + '</span>' +
+        '<span class="chip">' + esc(feature.legacyRoute === '—' ? 'sem rota' : 'rota pronta') + '</span>' +
+      '</div>' +
     '</article>'
   )).join('');
 
@@ -591,11 +604,12 @@ function renderCards(data) {
 
 function renderRoutes(data) {
   const tbody = document.getElementById('routes');
-  tbody.innerHTML = data.routes.map(row => (
+  const features = data.features || [];
+  tbody.innerHTML = features.map(feature => (
     '<tr>' +
-      '<td>' + esc(row.t || '—') + '</td>' +
-      '<td><code>' + esc(row.h || '—') + '</code></td>' +
-      '<td>' + (row.active === false ? '<span class="chip">inativa</span>' : '<span class="chip">ativa</span>') + '</td>' +
+      '<td>' + esc(feature.title) + '</td>' +
+      '<td><code>' + esc(feature.legacyRoute || '—') + '</code></td>' +
+      '<td>' + (feature.badge ? '<span class="chip">' + esc(feature.badge) + '</span>' : '<span class="chip">ativa</span>') + '</td>' +
     '</tr>'
   )).join('');
 }
@@ -623,6 +637,7 @@ function renderDetail(feature, data) {
       '<a href="/api/v1/admin/ui">Abrir admin</a>' +
       '<a href="/api/v1/gerador-mago/routes">Ver mapa</a>' +
       '<a href="/api/v1/gerador-mago/menu">Ver menu</a>' +
+      (feature.disabled ? '<span class="chip">EM BREVE</span>' : '<a href="/api/v1/gerador-mago/open/' + esc(feature.id) + '" target="_blank" rel="noreferrer">Abrir módulo</a>') +
     '</div>' +
     '<table>' +
       '<thead><tr><th>Estado</th><th>Valor</th></tr></thead>' +
